@@ -1,0 +1,88 @@
+<project name="event-monitor" default="compile" basedir=".">
+
+  <property name="name" value="event-monitor"/>
+
+  <loadfile property="version" srcFile="${basedir}/.version">
+    <filterchain>
+      <striplinebreaks/>
+    </filterchain>
+  </loadfile>
+
+  <path id="classpath">
+    <fileset dir="lib">
+      <include name="*.jar"/>
+    </fileset>
+    <pathelement location="target/classes"/>
+  </path>
+
+  <path id="build.classpath">
+    <fileset dir="build/lib">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="compile.classpath">
+    <path refid="classpath"/>
+    <path refid="build.classpath"/>
+  </path>
+
+  <path id="test.classpath">
+    <path refid="compile.classpath"/>
+    <pathelement location="target/test-classes"/>
+  </path>
+
+  <target name="clean" description="Remove generated files">
+    <delete dir="target"/>
+  </target>
+
+  <target name="compile" description="Compile">
+    <mkdir dir="target/classes"/>
+
+    <copy todir="target/classes">
+      <fileset dir="src/main/resources"/>
+
+      <filterset>
+        <filter token="version" value="${version}"/>
+      </filterset>
+    </copy>
+
+    <javac
+        debug="true"
+        srcdir="src/main/java"
+        destdir="target/classes"
+        classpathref="compile.classpath"/>
+  </target>
+
+  <target name="jar" description="Create jar" depends="compile">
+    <jar destfile="target/${name}-${version}.jar" basedir="target/classes"/>
+  </target>
+
+  <target name="test-compile" description="Compile test classes" depends="compile">
+    <mkdir dir="target/test-classes"/>
+
+    <copy todir="target/test-classes">
+      <fileset dir="src/test/resources"/>
+
+      <filterset>
+        <filter token="version" value="${version}"/>
+      </filterset>
+    </copy>
+
+    <javac
+        debug="true"
+        srcdir="src/test/java"
+        destdir="target/test-classes"
+        classpathref="compile.classpath"/>
+  </target>
+
+  <target name="test" depends="test-compile">
+      <junit fork="yes" haltonfailure="yes">
+          <sysproperty key="kestrel.hostname" value="localhost"/>
+          <sysproperty key="kestrel.port" value="22133"/>
+          <test name="com.rcc.kestrel.nio.test.NioClientTests"/>
+          <formatter type="plain" usefile="false"/>
+          <classpath refid="test.classpath"/>
+      </junit>
+  </target>
+
+</project>
