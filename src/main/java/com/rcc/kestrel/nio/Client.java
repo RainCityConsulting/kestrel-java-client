@@ -338,18 +338,44 @@ public class Client implements AsynchronousClient {
             }
         }
 
-        private void read(SelectionKey key) throws Exception {
+        private byte[] readAll(SelectionKey key) throws Exception {
             SocketChannel channel = (SocketChannel) key.channel();
             readBuf.clear();
             int numRead = channel.read(readBuf);
-            //log.debug("numRead [{}]", numRead);
+
+            byte[] data = new byte[0];
+            while (numRead == 1024) {
+                int start = data.length;
+                data = Arrays.copyOf(data, data.length + numRead);
+                System.arraycopy(readBuf.array(), 0, data, start, numRead);
+                readBuf.clear();
+                numRead = channel.read(readBuf);
+            }
 
             if (numRead == -1) {
                 key.cancel();
                 throw new SocketClosedException(channel);
             } else {
-                byte[] data = new byte[numRead];
-                System.arraycopy(readBuf.array(), 0, data, 0, numRead);
+                int start = data.length;
+                data = Arrays.copyOf(data, data.length + numRead);
+                System.arraycopy(readBuf.array(), 0, data, start, numRead);
+            }
+
+            return data;
+        }
+
+        private void read(SelectionKey key) throws Exception {
+            byte[] data = readAll(key);
+            SocketChannel channel = (SocketChannel) key.channel();
+            //readBuf.clear();
+            //int numRead = channel.read(readBuf);
+
+            //if (numRead == -1) {
+                //key.cancel();
+                //throw new SocketClosedException(channel);
+            //} else {
+                //byte[] data = new byte[numRead];
+                //System.arraycopy(readBuf.array(), 0, data, 0, numRead);
                 WorkItem item = null;
                 item = this.activeWorkItems.get(channel);
                 if (item == null) {
@@ -373,7 +399,7 @@ public class Client implements AsynchronousClient {
                     }
                     this.socketPool.returnObject(channel);
                 }
-            }
+            //}
         }
 
         private void write(SelectionKey key) throws IOException {

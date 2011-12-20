@@ -321,7 +321,7 @@ public class NioClientTests {
             });
         }
 
-        this.awaitCountDownLatch(latch, 2, MINUTES);
+        this.awaitCountDownLatch(latch, 10, SECONDS);
         assertEquals(0, latch.getCount());
 
         final CountDownLatch statLatch = new CountDownLatch(1);

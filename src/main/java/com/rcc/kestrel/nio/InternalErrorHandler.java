@@ -48,13 +48,4 @@ abstract class InternalErrorHandler implements InternalHandler {
     }
 
     protected abstract boolean accumulate(byte[] acc);
-
-    protected String readToEndOfLine(byte[] data, int pos) {
-        int end = pos;
-        while ((end+1) < data.length && data[end] == '\r' && data[end+1] == '\n') end++;
-        int len = end - pos + 1;
-        byte[] tmp = new byte[len];
-        System.arraycopy(data, pos, tmp, 0, len);
-        return new String(tmp);
-    }
 }
