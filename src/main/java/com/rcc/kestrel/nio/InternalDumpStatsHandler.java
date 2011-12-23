@@ -34,93 +34,81 @@ class InternalDumpStatsHandler extends InternalErrorHandler {
                 && acc[l-2] == '\r'
                 && acc[l-1] == '\n')
         { // We've read to the end
+            String[] lines = (new String(acc)).split("\\r\\n");
             List<QueueStats> stats = new ArrayList<QueueStats>();
-            try {
-                int pos = 0;
-                String line = readToEndOfLine(acc, pos);
-                pos += line.length()+2;
-                while (!"END\r\n".equals(line)) {
-                    log.debug("line [{}]", line);
-                    long items = 0l;
-                    long bytes = 0l;
-                    long totalItems = 0l;
-                    long logSize = 0l;
-                    long expiredItems = 0l;
-                    long memItems = 0l;
-                    long memBytes = 0l;
-                    long age = 0l;
-                    long discarded = 0l;
-                    long waiters = 0l;
-                    int openTxns = 0;
+            int i = 0;
+            while (true) {
+                String line = lines[i];
+                Matcher m = QUEUE.matcher(line);
+                while ((i+1) < lines.length && !m.matches()) {
+                    line = lines[++i];
+                    m = QUEUE.matcher(line);
+                }
 
-                    Matcher m = QUEUE.matcher(line);
-                    if (m.matches()) {
-                        String queueName = m.group(1);
+                if (!m.matches()) { break; }
 
-                        while (true) {
-                            String nvpLine = readToEndOfLine(acc, pos);
-                            log.debug("nvp line [{}]", nvpLine);
-                            pos += line.length()+2;
-                            if ("}\r\n".equals(nvpLine)) { // End
-                                stats.add(new QueueStats(
-                                        queueName, items, bytes, totalItems, logSize, expiredItems,
-                                        memItems, memBytes, age, discarded, waiters, openTxns));
-                                break;
-                            } else {
-                                m = NVP.matcher(nvpLine);
-                                if (m.matches()) {
-                                    String n = m.group(1);
-                                    String v = m.group(2);
-                                    if ("items".equals(n)) {
-                                        items = Long.parseLong(v);
-                                    } else if ("bytes".equals(n)) {
-                                        bytes = Long.parseLong(v);
-                                    } else if ("totalItems".equals(n)) {
-                                        totalItems = Long.parseLong(v);
-                                    } else if ("logSize".equals(n)) {
-                                        logSize = Long.parseLong(v);
-                                    } else if ("expiredItems".equals(n)) {
-                                        expiredItems = Long.parseLong(v);
-                                    } else if ("memItems".equals(n)) {
-                                        memItems = Long.parseLong(v);
-                                    } else if ("memBytes".equals(n)) {
-                                        memBytes = Long.parseLong(v);
-                                    } else if ("age".equals(n)) {
-                                        age = Long.parseLong(v);
-                                    } else if ("discarded".equals(n)) {
-                                        discarded = Long.parseLong(v);
-                                    } else if ("waiters".equals(n)) {
-                                        waiters = Long.parseLong(v);
-                                    } else if ("openTransactions".equals(n)) {
-                                        openTxns = Integer.parseInt(v);
-                                    } else {
-                                        throw new RuntimeException(String.format(
-                                                "Unexpected NVP name [%s]", n));
-                                    }
-                                } else {
-                                    throw new RuntimeException(
-                                            String.format("Unexpected value from server [%s]",
-                                                    nvpLine));
-                                }
-                            }
-                            nvpLine = readToEndOfLine(acc, pos);
-                            log.debug("nvp line [{}]", nvpLine);
-                            pos += line.length()+2;
-                        }
+                String queueName = m.group(1);
+                long items = 0l;
+                long bytes = 0l;
+                long totalItems = 0l;
+                long logSize = 0l;
+                long expiredItems = 0l;
+                long memItems = 0l;
+                long memBytes = 0l;
+                long age = 0l;
+                long discarded = 0l;
+                long waiters = 0l;
+                int openTxns = 0;
+
+                line = lines[++i];
+                m = NVP.matcher(line);
+                while (m.matches()) {
+                    String n = m.group(1);
+                    String v = m.group(2);
+                    if ("items".equals(n)) {
+                        items = Long.parseLong(v);
+                    } else if ("bytes".equals(n)) {
+                        bytes = Long.parseLong(v);
+                    } else if ("totalItems".equals(n)) {
+                        totalItems = Long.parseLong(v);
+                    } else if ("logSize".equals(n)) {
+                        logSize = Long.parseLong(v);
+                    } else if ("expiredItems".equals(n)) {
+                        expiredItems = Long.parseLong(v);
+                    } else if ("memItems".equals(n)) {
+                        memItems = Long.parseLong(v);
+                    } else if ("memBytes".equals(n)) {
+                        memBytes = Long.parseLong(v);
+                    } else if ("age".equals(n)) {
+                        age = Long.parseLong(v);
+                    } else if ("discarded".equals(n)) {
+                        discarded = Long.parseLong(v);
+                    } else if ("waiters".equals(n)) {
+                        waiters = Long.parseLong(v);
+                    } else if ("openTransactions".equals(n)) {
+                        openTxns = Integer.parseInt(v);
                     } else {
-                        throw new RuntimeException(
-                                String.format("Unexpected value from server [%s]", line));
+                        throw new RuntimeException(String.format(
+                                "Unexpected NVP name [%s]", n));
                     }
 
-                    line = readToEndOfLine(acc, pos);
-                    pos += line.length()+2;
+                    line = lines[++i];
+                    m = NVP.matcher(line);
                 }
+
+                stats.add(new QueueStats(
+                        queueName, items, bytes, totalItems, logSize, expiredItems,
+                        memItems, memBytes, age, discarded, waiters, openTxns));
+            }
+
+            try {
                 this.statsResponseHandler.onSuccess(stats);
             } catch (Throwable t) {
-                log.warn("Unexpected Throwable [{}]", t.getMessage(), t);
-            } finally {
-                return true;
+                log.warn("Caught Throwable calling responseHandler.onSuccess [{}]",
+                        t.getMessage(), t);
             }
+
+            return true;
         }
 
         // Keep going

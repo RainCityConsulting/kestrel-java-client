@@ -13,5 +13,6 @@ public interface AsynchronousClient extends Client {
     public boolean peek(String queueName, long timeoutMs, GetResponseHandler handler);
 
     public boolean deleteQueue(String queueName, DeleteResponseHandler handler);
+
     public boolean stats(StatsResponseHandler handler);
 }

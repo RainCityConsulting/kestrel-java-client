@@ -59,7 +59,6 @@ public class NioClientTests {
         this.client.disconnect();
     }
 
-/*
     @Test
     public void testSet() throws Throwable {
         final CountDownLatch writeLatch = new CountDownLatch(1);
@@ -278,7 +277,6 @@ public class NioClientTests {
 
         synchronized (passed) { assertTrue(passed[0]); }
     }
-*/
 
     @Test
     public void testSetAndForgetRandomLoadWithThreadPool() throws Throwable {
@@ -324,18 +322,15 @@ public class NioClientTests {
         this.awaitCountDownLatch(latch, 10, SECONDS);
         assertEquals(0, latch.getCount());
 
+        final boolean[] passed = new boolean[] { false };
         final CountDownLatch statLatch = new CountDownLatch(1);
         this.client.stats(new StatsResponseHandler() {
             public void onSuccess(Collection<QueueStats> stats) {
-                System.out.println("HELLO!!!!! " + stats.size());
                 for (QueueStats s : stats) {
                     if (queueName.equals(s.getName())) {
-                        System.out.println("items=" + s.getItems());
-                        System.out.println("bytes=" + s.getBytes());
-                        System.out.println("totalItems=" + s.getTotalItems());
-                        System.out.println("memItems=" + s.getMemItems());
-                        System.out.println("memBytes=" + s.getMemBytes());
-                        System.out.println("age=" + s.getAge());
+                        if ((s.getItems() + s.getTotalItems())== 0) {
+                            passed[0] = true;
+                        }
                     }
                 }
                 statLatch.countDown();
@@ -348,9 +343,9 @@ public class NioClientTests {
         });
 
         statLatch.await(8, SECONDS);
+        assertTrue(passed[0]);
     }
 
-/*
     @Test
     public void testSetAndForgetRandomLoad() throws Throwable {
         int iters = 100000;
@@ -428,7 +423,6 @@ public class NioClientTests {
 
         synchronized (passed) { assertTrue(passed[0]); }
     }
-*/
 
     private void awaitCountDownLatch(CountDownLatch latch, long timeout, TimeUnit timeoutUnit)
         throws Exception
