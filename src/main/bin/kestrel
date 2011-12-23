@@ -1,0 +1,28 @@
+#!/bin/bash
+
+cd $(dirname $0)/..
+BASEDIR=$PWD
+cd - >/dev/null
+
+hostname=localhost
+port=22133
+prettyPrint=
+
+while getopts "h:p:r" o; do
+  case $o in
+    h) hostname=$OPTARG ;;
+    p) port=$OPTARG ;;
+    r) prettyPrint="true" ;;
+    *) echo "Unknown option: $o" && exit 1 ;;
+  esac
+done
+
+shift $(( $OPTIND - 1 ))
+
+local_opts="-Dkestrel.server.hostname=$hostname -Dkestrel.server.port=$port -Dkestrel.action=$1 -Dkestrel.prettyPrint=$prettyPrint"
+
+shift
+
+java -classpath $(echo $BASEDIR/lib/*.jar | tr ' ' :) \
+$JAVA_OPTS $KESTREL_CLIENT_OPTS $local_opts \
+com.rcc.kestrel.CLI "$@"

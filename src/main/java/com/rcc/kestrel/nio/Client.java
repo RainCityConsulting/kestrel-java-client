@@ -157,7 +157,7 @@ public class Client implements AsynchronousClient {
         log.trace("deleteQueue");
 
         StringBuilder buf = new StringBuilder();
-        buf.append("delete ").append(queueName);
+        buf.append("delete ").append(queueName).append("\r\n");
         return this.workQueue.offer(
                 WorkItem.delete(buf.toString().getBytes(), new InternalDeleteHandler(handler)));
     }

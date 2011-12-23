@@ -17,7 +17,7 @@ class InternalDeleteHandler extends InternalErrorHandler {
     }
 
     protected boolean accumulate(byte[] acc) {
-        if (Arrays.equals("STORED\r\n".getBytes(), acc)) {
+        if (Arrays.equals("END\r\n".getBytes(), acc)) {
             if (this.deleteResponseHandler != null) {
                 this.deleteResponseHandler.onSuccess();
             }
