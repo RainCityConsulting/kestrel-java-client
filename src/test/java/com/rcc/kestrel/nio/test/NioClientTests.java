@@ -5,11 +5,7 @@ import com.rcc.kestrel.QueueStats;
 import com.rcc.kestrel.nio.Client;
 import com.rcc.kestrel.async.*;
 
-import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
-import org.apache.thrift.protocol.TBinaryProtocol;
+import static org.apache.commons.lang.RandomStringUtils.*;
 
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -62,7 +58,7 @@ public class NioClientTests {
     @Test
     public void testSet() throws Throwable {
         final CountDownLatch writeLatch = new CountDownLatch(1);
-        final byte[] value = "ian".getBytes();
+        final byte[] value = randomAlphanumeric(128).getBytes();
 
         final boolean[] passed = new boolean[] { false };
 
@@ -111,7 +107,7 @@ public class NioClientTests {
 
     @Test
     public void testExpiration() throws Throwable {
-        final byte[] value = "ian".getBytes();
+        final byte[] value = randomAlphanumeric(128).getBytes();
 
         final boolean[] passed = new boolean[] { false };
 
@@ -158,7 +154,7 @@ public class NioClientTests {
 
     @Test
     public void testSetAndForget() throws Throwable {
-        final byte[] value = "ian".getBytes();
+        final byte[] value = randomAlphanumeric(128).getBytes();
 
         client.setAndForget(this.queueName, 1L, value);
 
@@ -191,7 +187,7 @@ public class NioClientTests {
     @Test
     public void testPeek() throws Throwable {
         final CountDownLatch writeLatch = new CountDownLatch(1);
-        final byte[] value = "ian".getBytes();
+        final byte[] value = randomAlphanumeric(128).getBytes();
 
         final boolean[] passed = new boolean[] { false };
 
@@ -234,7 +230,7 @@ public class NioClientTests {
     @Test
     public void testReliableGet() throws Throwable {
         final CountDownLatch writeLatch = new CountDownLatch(1);
-        final byte[] value = "ian".getBytes();
+        final byte[] value = randomAlphanumeric(128).getBytes();
 
         final boolean[] passed = new boolean[] { false };
 
@@ -291,7 +287,6 @@ public class NioClientTests {
                 public void run() {
                     for (int i = 0; i < itersPerThread; i++) {
                         client.setAndForget(qn, 120L, randomAlphabetic(i % 512).getBytes());
-                        //client.setAndForget(qn, 120L, "ian".getBytes());
                     }
                 }
             });
@@ -381,7 +376,7 @@ public class NioClientTests {
             });
         }
 
-        latch.await(60, SECONDS);
+        this.awaitCountDownLatch(latch, 2, MINUTES);
 
         assertEquals(0, latch.getCount());
 
@@ -390,7 +385,7 @@ public class NioClientTests {
 
     @Test
     public void testSetAndForgetLoad() throws Throwable {
-        final byte[] value = "ian".getBytes();
+        final byte[] value = randomAlphanumeric(128).getBytes();
 
         final boolean[] passed = new boolean[] { true };
 
@@ -404,6 +399,8 @@ public class NioClientTests {
                 public void onSuccess(byte[] data) {
                     try {
                         if (!Arrays.equals(data, value)) {
+                            System.out.println(String.format("Data is not equal [%s] [%s]",
+                                    new String(data), new String(value)));
                             synchronized (passed) { passed[0] = false; }
                         }
                     } finally {
