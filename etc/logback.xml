@@ -1,0 +1,13 @@
+<configuration>
+
+  <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{ISO8601} [%t] %5p %36.36logger{16}:%4L - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="debug">
+    <appender-ref ref="stdout" />
+  </root>
+
+</configuration>

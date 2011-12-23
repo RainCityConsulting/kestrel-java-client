@@ -38,6 +38,7 @@
   <target name="compile" description="Compile">
     <mkdir dir="target/classes"/>
 
+    <!--
     <copy todir="target/classes">
       <fileset dir="src/main/resources"/>
 
@@ -45,6 +46,7 @@
         <filter token="version" value="${version}"/>
       </filterset>
     </copy>
+    -->
 
     <javac
         debug="true"
@@ -55,6 +57,27 @@
 
   <target name="jar" description="Create jar" depends="compile">
     <jar destfile="target/${name}-${version}.jar" basedir="target/classes"/>
+  </target>
+
+  <target name="cli-dist" depends="jar">
+    <mkdir dir="target/cli-dist/etc"/>
+    <mkdir dir="target/cli-dist/bin"/>
+    <mkdir dir="target/cli-dist/lib"/>
+
+    <copy todir="target/cli-dist/bin">
+      <fileset dir="src/main/bin"/>
+    </copy>
+
+    <copy todir="target/cli-dist/lib">
+      <fileset file="target/${name}-${version}.jar"/>
+      <fileset dir="lib"/>
+    </copy>
+
+    <copy todir="target/cli-dist/etc">
+      <fileset dir="etc"/>
+    </copy>
+
+    <chmod dir="target/cli-dist/bin" perm="ugo+rx" includes="*"/>
   </target>
 
   <target name="test-compile" description="Compile test classes" depends="compile">
